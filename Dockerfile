@@ -1,7 +1,7 @@
-# Folosim imaginea oficială de PHP 8.2 cu FPM
+# Folosim imaginea oficială de PHP 8.3 cu FPM
 FROM php:8.3-fpm
 
-# Instalăm dependințe de bază
+# Instalăm dependințe de bază + PostgreSQL dev
 RUN apt-get update && apt-get install -y \
     gnupg2 \
     curl \
@@ -14,13 +14,13 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     pkg-config \
     git \
-    && docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl bcmath gd
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl bcmath gd \
+    && docker-php-ext-install pdo_pgsql pgsql
 
-
-    # Instalăm Xdebug
+# Instalăm Xdebug
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
-
 
 # Configurăm Xdebug direct în Dockerfile
 RUN echo "zend_extension=xdebug" > /usr/local/etc/php/conf.d/99-xdebug.ini \
@@ -31,13 +31,11 @@ RUN echo "zend_extension=xdebug" > /usr/local/etc/php/conf.d/99-xdebug.ini \
  && echo "xdebug.discover_client_host=1" >> /usr/local/etc/php/conf.d/99-xdebug.ini \
  && echo "xdebug.log=/tmp/xdebug.log" >> /usr/local/etc/php/conf.d/99-xdebug.ini
 
-
-
 # Instalăm Composer global
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Setăm directorul de lucru
 WORKDIR /var/www
 
-
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+
